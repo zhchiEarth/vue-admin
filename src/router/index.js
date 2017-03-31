@@ -4,7 +4,7 @@ import Hello from '@/components/Hello'
 import Login from '@/components/Login'
 import Home from '@/components/Home'
 import Table from '@/components/Table'
-import Category from '@/components/Category'
+import Category from '@/views/Category'
 import Brand from '@/views/Brand'
 import Form from '@/components/Form'
 // import user from '@/components/user'
@@ -12,7 +12,7 @@ import Form from '@/components/Form'
 
 Vue.use(Router)
 
-export default new Router({
+ const router = new Router({
   routes: [
     // {
     //   path: '/',
@@ -22,20 +22,33 @@ export default new Router({
     {
       path: '/login',
       name: 'Login',
-      component: Login
+      component: Login,
+      meta: { requiresAuth: false }
     },
     {
       path: '/',
       component: Home,
       name: '商品管理',
+      meta: { requiresAuth: true },
       iconCls: 'el-icon-menu',//图标样式class
       children: [
-          { path: '/categories', component: Category, name: '商品类别' },
-          // { path: '/table', component: Table, name: '商品类别' },
-          // { path: '/table', component: Table, name: '商品类别' },
-          { path: '/brands', component: Brand, name: '商品品牌' },
-          // { path: '/user', component: user, name: '列表' },
+          { path: '/categories', meta: { requiresAuth: true }, component: Category, name: '商品类别' },
+          { path: '/brands', meta: { requiresAuth: true }, component: Brand, name: '商品品牌' },
       ]
     },
   ]
+})
+
+export default router
+
+router.beforeEach((to, from, next) => {
+  let token = window.localStorage.getItem('token');
+  if (to.matched.some(record => record.meta.requiresAuth) && (!token || token === null)) {
+    next({
+      path: '/login',
+      query: { redirect: to.fullPath }
+    })
+  } else {
+    next()
+  }
 })

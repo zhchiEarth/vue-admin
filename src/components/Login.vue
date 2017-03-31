@@ -1,34 +1,39 @@
 <template>
-  <el-form :model="ruleForm2" :rules="rules2" ref="ruleForm2" label-position="left" label-width="0px" class="demo-ruleForm login-container">
+  <el-form :model="loginForm" :rules="rules2" ref="loginForm" label-position="left" label-width="0px" class="demo-ruleForm login-container">
     <h3 class="title">登录</h3>
-    <el-form-item prop="account">
-      <el-input type="text" v-model="ruleForm2.account" auto-complete="off" placeholder="用户名"></el-input>
+
+    <el-form-item prop="email">
+      <el-input type="text" v-model="loginForm.email" auto-complete="off" placeholder="用户名"></el-input>
     </el-form-item>
-    <el-form-item prop="checkPass">
-      <el-input type="password" v-model="ruleForm2.checkPass" auto-complete="off" placeholder="密码"></el-input>
+    <el-form-item prop="password">
+      <el-input type="password" v-model="loginForm.password" auto-complete="off" placeholder="密码"></el-input>
     </el-form-item>
     <el-checkbox v-model="checked" checked class="remember">记住密码</el-checkbox>
+
     <el-form-item style="width:100%;">
-      <el-button type="primary" style="width:100%;" @click="submitForm('ruleForm2')" >登录</el-button>
+      <el-button type="primary" style="width:100%;" @click="submitForm('loginForm')" >登录</el-button>
       <!--<el-button @click.native.prevent="handleReset2">重置</el-button>-->
     </el-form-item>
   </el-form>
 </template>
 <script>
+  import api from '../api/api'
+  // const api = new API()
+
   export default {
     name: 'login',
     data() {
       return {
-        ruleForm2: {
-          account: '',
-          checkPass: ''
+        loginForm: {
+          email: 'admin@admin.com',
+          password: '123456'
         },
         rules2: {
-          account: [
+          email: [
             { required: true, message: '请输入账号', trigger: 'blur' },
             //{ validator: validaePass }
           ],
-          checkPass: [
+          password: [
             { required: true, message: '请输入密码', trigger: 'blur' },
             //{ validator: validaePass2 }
           ]
@@ -38,12 +43,26 @@
     },
 
     methods: {
-      submitForm(formName) {
-        this.$refs[formName].validate((valid) => {
+      submitForm() {
+        this.$refs.loginForm.validate((valid) => {
           if (valid) {
-            this.$router.push({ path: '/table' });
+            let that = this;
+            api.post(`/authorizations`, this.loginForm)
+              .then(function (response) {
+                  if (response.data.data.token) {
+                      const token = response.data.data.token
+                      window.localStorage.setItem('token', token)
+                      window.location.pathname = '/'
+                      that.$router.push({ path: '/' });
+                  } else {
+                      api.reqFail(that, '用户名或密码错误');
+                  }
+              })
+              .catch(function (error) {
+                api.reqFail(that, error);
+              });
           } else {
-            console.log('error submit!!');
+            // console.log('error submit!!');
             return false;
           }
         });
